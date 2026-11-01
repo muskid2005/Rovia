@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ScrollView,
@@ -17,10 +18,10 @@ export default function ForgotPasswordScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton}>
+        {/* Back Button
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Header Titles */}
         <Text style={styles.title}>Forgot Password?</Text>
@@ -46,7 +47,7 @@ export default function ForgotPasswordScreen() {
           </View>
 
           {/* Send Reset Link Button */}
-          <TouchableOpacity style={styles.submitButton}>
+          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/resetLink')}>
             <Text style={styles.submitButtonText}>Send Reset Link</Text>
           </TouchableOpacity>
 
@@ -54,7 +55,7 @@ export default function ForgotPasswordScreen() {
 
         {/* Back to Log In Button */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity style={styles.backToLoginButton}>
+          <TouchableOpacity style={styles.backToLoginButton} onPress={() => router.replace('/login')}>
             <Text style={styles.backToLoginText}>Back to Log In</Text>
           </TouchableOpacity>
         </View>
@@ -68,32 +69,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-  },
-  scrollContent: {
+    paddingTop: 100,
     paddingHorizontal: 24,
-    paddingTop: 10,
-    paddingBottom: 30,
-    flexGrow: 1,
-    justifyContent: 'space-between',
+
   },
-  backButton: {
-    marginBottom: 20,
-    width: 30,
-  },
+  // scrollContent: {
+  //   paddingHorizontal: 24,
+  //   paddingTop: 10,
+  //   paddingBottom: 30,
+  //   flexGrow: 1,
+  //   justifyContent: 'space-between',
+  // },
+  // backButton: {
+  //   marginBottom: 20,
+  //   width: 30,
+  // },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
     color: '#6B7280',
+    fontFamily: "regular",
     textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 30,
+    marginTop: 8,
+    marginBottom: 80,
     paddingHorizontal: 10,
-    lineHeight: 20,
+    // lineHeight: 20,
   },
   formContainer: {
     width: '100%',
@@ -114,7 +119,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    fontFamily: "regular",
     color: '#1A1A1A',
   },
   submitButton: {
@@ -127,11 +133,11 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
   },
   footerContainer: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 440,
     marginBottom: 20,
   },
   backToLoginButton: {
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
   },
   backToLoginText: {
     color: '#16A34A',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: "semiBold",
   },
 });

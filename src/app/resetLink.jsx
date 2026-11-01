@@ -1,10 +1,12 @@
+import { router } from 'expo-router';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function ResetLinkScreen() {
   return (
@@ -21,7 +23,7 @@ export default function ResetLinkScreen() {
         </Text>
 
         {/* Back to Log In Button */}
-        <TouchableOpacity style={styles.backToLoginButton}>
+        <TouchableOpacity style={styles.backToLoginButton} onPress={() => router.replace('/login')}>
           <Text style={styles.backToLoginText}>Back to Log In</Text>
         </TouchableOpacity>
 
@@ -38,14 +40,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 100,
     paddingBottom: 40,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
@@ -54,6 +56,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     textAlign: 'center',
     lineHeight: 20,
+    fontFamily: "regular",
     paddingHorizontal: 20,
   },
   backToLoginButton: {
@@ -65,10 +68,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    marginTop: 340,
   },
   backToLoginText: {
     color: '#16A34A',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: "semiBold",
   },
 });

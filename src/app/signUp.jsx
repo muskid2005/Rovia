@@ -1,17 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,9 +26,9 @@ export default function SignUpScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton}>
+        {/* <TouchableOpacity style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Header Titles */}
         <Text style={styles.title}>Create Account</Text>
@@ -35,15 +37,27 @@ export default function SignUpScreen() {
         {/* Form Container */}
         <View style={styles.formContainer}>
           
-          {/* Full Name */}
+          {/* First Name */}
           <View style={styles.inputContainer}>
             <Ionicons name="person-outline" size={20} color="#6B7280" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="Full Name"
+              placeholder="First Name"
               placeholderTextColor="#9CA3AF"
-              value={fullName}
-              onChangeText={setFullName}
+              value={firstName}
+              onChangeText={setFirstName}
+            />
+          </View>
+
+           {/* last Name */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="person-outline" size={20} color="#6B7280" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Last Name"
+              placeholderTextColor="#9CA3AF"
+              value={lastName}
+              onChangeText={setLastName}
             />
           </View>
 
@@ -116,14 +130,14 @@ export default function SignUpScreen() {
           </View>
 
           {/* Create Account Button */}
-          <TouchableOpacity style={styles.submitButton}>
+          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/linkSent')}>
             <Text style={styles.submitButtonText}>Create Account</Text>
           </TouchableOpacity>
 
           {/* Footer Navigation Link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/login')}>
               <Text style={styles.signInText}>Sign In</Text>
             </TouchableOpacity>
           </View>
@@ -138,6 +152,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: 32,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -149,16 +164,18 @@ const styles = StyleSheet.create({
     width: 30,
   },
   title: {
+    
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
+    fontFamily: "regular",
     color: '#6B7280',
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 4,
     marginBottom: 30,
   },
   formContainer: {
@@ -180,7 +197,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    fontFamily: "regular",
     color: '#1A1A1A',
   },
   checkboxContainer: {
@@ -207,6 +225,7 @@ const styles = StyleSheet.create({
   termsText: {
     flex: 1,
     fontSize: 12,
+    fontFamily: "regular",
     color: '#4B5563',
     lineHeight: 18,
   },
@@ -224,7 +243,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
   },
   footerRow: {
     flexDirection: 'row',
@@ -233,11 +252,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
+    fontFamily: "regular",
     color: '#6B7280',
   },
   signInText: {
     fontSize: 14,
     color: '#16A34A',
-    fontWeight: 'bold',
+    fontFamily: 'semiBold',
   },
 });

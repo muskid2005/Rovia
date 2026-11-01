@@ -1,15 +1,16 @@
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
-
 
 
 export default function LoginScreen() {
@@ -21,9 +22,9 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton}>
+        {/* <TouchableOpacity style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Log in to your applicant account</Text>
@@ -65,12 +66,12 @@ export default function LoginScreen() {
           </View>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity style={styles.forgotPasswordContainer}>
+          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => router.push('/forgotPassword')}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Log In Button */}
-          <TouchableOpacity style={styles.submitButton}>
+          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/home')}>
             <Text style={styles.submitButtonText}>Log In</Text>
           </TouchableOpacity>
 
@@ -82,15 +83,15 @@ export default function LoginScreen() {
           </View>
 
           {/* Google Login Button */}
-          <TouchableOpacity style={styles.googleButton}>
-            <FontAwesome name="google" size={18} color="#EA4335" style={styles.googleIcon} />
+          <TouchableOpacity style={styles.googleButton} onPress={() => router.push('/resetPassword')}>
+            <Image source={require("../../assets/images/localImages/google.png")} style={styles.googleIcon} />
             <Text style={styles.googleButtonText}>Log in with Google</Text>
           </TouchableOpacity>
 
           {/* Footer Link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/signUp')}>
               <Text style={styles.signUpText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -104,6 +105,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: 32,
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -116,15 +118,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
+    fontFamily: "regular",
     color: '#6B7280',
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: 4,
     marginBottom: 30,
   },
   formContainer: {
@@ -146,7 +149,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    fontFamily: "regular",
     color: '#1A1A1A',
   },
   forgotPasswordContainer: {
@@ -156,7 +160,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: '#EF4444',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: "regular",
   },
   submitButton: {
     backgroundColor: '#16A34A',
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -183,7 +187,8 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: '#9CA3AF',
-    fontSize: 13,
+    fontSize: 12,
+    fontFamily: "regular",
     paddingHorizontal: 12,
   },
   googleButton: {
@@ -198,11 +203,13 @@ const styles = StyleSheet.create({
   },
   googleIcon: {
     marginRight: 10,
+    width: 18,
+    height: 19
   },
   googleButtonText: {
     color: '#1A1A1A',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: "semiBold",
   },
   footerRow: {
     flexDirection: 'row',
@@ -211,11 +218,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
+    fontFamily: "regular",
     color: '#6B7280',
   },
   signUpText: {
     fontSize: 14,
     color: '#16A34A',
-    fontWeight: 'bold',
+    fontFamily: 'bold',
   },
 });

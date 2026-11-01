@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,10 +21,10 @@ export default function ResetPasswordScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Back Button */}
+        {/* Back Button
         <TouchableOpacity style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Header Titles */}
         <Text style={styles.title}>Reset Password?</Text>
@@ -83,7 +84,7 @@ export default function ResetPasswordScreen() {
 
         {/* Back to Log In Button */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity style={styles.backToLoginButton}>
+          <TouchableOpacity style={styles.backToLoginButton} onPress={()=> router.replace("/login")}>
             <Text style={styles.backToLoginText}>Back to Log In</Text>
           </TouchableOpacity>
         </View>
@@ -100,10 +101,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 10,
+    paddingTop: 32,
     paddingBottom: 30,
     flexGrow: 1,
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
   },
   backButton: {
     marginBottom: 20,
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
+    marginTop: 36,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -173,6 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    marginTop: 400,
   },
   backToLoginText: {
     color: '#16A34A',

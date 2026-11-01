@@ -1,3 +1,6 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
@@ -13,7 +16,7 @@ export default function OnboardingScreen() {
       pagerRef.current?.setPage(currentPage + 1);
     } else {
       // Navigate to your Auth/Home screen here
-      router.push('/signUp');
+      router.replace('/signUp');
     }
   };
 
@@ -21,12 +24,8 @@ export default function OnboardingScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
-        <Image 
-            source={require('../../assets/images/localImages/logo.png')} /* Update with your asset path */ 
-            style={styles.logo} 
-            resizeMode="contain"
-          />
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        {/* <Image source={require('../../assets/images/localImages/logo.png')} style={styles.logo}  resizeMode="contain"/> */}
+        <TouchableOpacity onPress={() => router.replace('/login')}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -40,25 +39,60 @@ export default function OnboardingScreen() {
       >
         {/* Slide 1 */}
         <View key="1" style={styles.slide}>
-          <Text style={styles.subtitle}>Find. Apply. Grow</Text>
           <Image 
-            source={require('../../assets/images/localImages/splash1.png')} /* Update with your asset path */ 
-            style={styles.image} 
+            source={require('../../assets/images/localImages/logo.png')} /* Update with your asset path */ 
+            style={styles.logo} 
             resizeMode="contain"
           />
-          <Text style={styles.title}>Find your next...</Text>
+          <View style={{position: 'relative', alignItems: 'center'}}>
+            <Image 
+              source={require('../../assets/images/localImages/splash1.png')} /* Update with your asset path */ 
+              style={styles.image} 
+              resizeMode="contain"
+            />
+
+            <View style={[styles.badgeContainer, styles.badgeContainerPositionOne]}>
+              <FontAwesome name="search" size={28} color="#31AC04" />
+              <Text style={styles.badgeText}>Find Jobs</Text>
+            </View>
+
+            <View style={[styles.badgeContainer, styles.badgeContainerPositionTwo]}>
+              <FontAwesome name="send" size={28} color="#31AC04" />
+              <Text style={styles.badgeText}>Apply Easily</Text>
+            </View>
+
+            <View style={[styles.badgeContainer, styles.badgeContainerPositionThree]}>
+              <Ionicons name="checkmark-done-sharp" size={28} color="#31AC04" />
+              <Text style={styles.badgeText}>Get Hired</Text>
+            </View>
+          </View>
+          
+          
+          
+          <Text style={styles.title}>Find your next</Text>
+          <Text style={styles.title2}>opportunity with us</Text>
         </View>
 
         {/* Slide 2 */}
         <View key="2" style={styles.slide}>
-          <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>✅</Text>
+          <View style={[styles.badgeContainer, {borderBottomWidth: 0, borderRightWidth:0}]}>
+            <Image source={require("../../assets/images/localImages/right.png")} style={{width: 64, height: 64}} resizeMode="contain"/>
+
           </View>
-          <Image 
-            source={require('../../assets/images/localImages/splash2.png')} /* Update with your asset path */ 
-            style={styles.image} 
-            resizeMode="contain"
-          />
+          {/* <View style={{position: "relative"}}> */}
+            <Image 
+              source={require('../../assets/images/localImages/splash2.png')} /* Update with your asset path */ 
+              style={styles.image} 
+              resizeMode="contain"
+            />
+            <View style={styles.congratulations}>
+              <FontAwesome6 name="toolbox" size={24} color="#31AC04" />
+              <View>
+                <Text style={{fontSize: 14, fontFamily: "semiBold"}}>Congratulations!</Text>
+                <Text style={{fontSize: 12, fontFamily: "regular"}}>You’ve been shortlisted</Text>
+              </View>
+            </View>
+          {/* </View> */}
           <Text style={styles.title}>Apply with <Text style={styles.greenText}>Confidence</Text></Text>
         </View>
       </PagerView>
@@ -77,7 +111,7 @@ export default function OnboardingScreen() {
         {currentPage === 1 && (
           <View style={styles.footerTextRow}>
             <Text style={styles.grayText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => console.log('Sign Up pressed')}>
+            <TouchableOpacity onPress={() => router.replace('/signUp')}>
               <Text style={styles.signUpText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -88,30 +122,39 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  congratulations: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderBottomWidth: 2,
+    borderRightWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: "#D1D5DB",
+    marginTop: -30
+    // position: "absolute"
+  },
   logo: {
-    width: 100,
-    height: 40,
+    width: 180,
+    height: 80,
   },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     paddingHorizontal: 24,
     paddingTop: 10,
   },
-  brand: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#16A34A',
-  },
   skipText: {
     fontSize: 16,
-    color: '#16A34A',
-    fontWeight: '500',
+    color: '#31AC04',
+    fontFamily: 'semiBold',
   },
   pagerView: {
     flex: 1,
@@ -122,31 +165,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 20,
-    fontWeight: '600',
-  },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     color: '#1A1A1A',
     marginTop: 20,
     textAlign: 'center',
   },
+  title2: {
+    fontSize: 22,
+    fontFamily: 'bold',
+    color: '#31AC04',
+    textAlign: 'center',
+  },
   greenText: {
-    color: '#16A34A',
+    color: '#31AC04',
   },
   image: {
     width: 280,
     height: 320,
+    // position: 'relative',
   },
   badgeContainer: {
-    marginBottom: 10,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 8,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: '#D1D5DB',
+    // borderRightWidth: 0,
+    // gap: 8,  
+  },
+  badgeContainerPositionOne:{
+    top: 24,
+    right: 10,
+    position: 'absolute',
+  },
+   badgeContainerPositionTwo:{
+    top: 100,
+    left: -30,
+    position: 'absolute',
+  },
+   badgeContainerPositionThree:{
+    right: -20,
+    bottom: 20,
+    position: 'absolute',
   },
   badgeText: {
-    fontSize: 24,
+    fontSize: 12,
+    fontFamily: 'regular',
+    marginTop: 12,
   },
   footer: {
     paddingHorizontal: 24,
@@ -165,11 +236,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#31AC04',
     width: 24,
   },
   button: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#31AC04',
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
@@ -179,7 +250,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Regular',
   },
   footerTextRow: {
     flexDirection: 'row',
@@ -188,11 +259,12 @@ const styles = StyleSheet.create({
   },
   grayText: {
     color: '#6B7280',
+    fontFamily: 'Regular',
     fontSize: 14,
   },
   signUpText: {
-    color: '#16A34A',
+    color: '#31AC04',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: 'semiBold',
   },
 });
