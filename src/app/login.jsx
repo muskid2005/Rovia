@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -11,20 +12,74 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { postRequest } from "../api/postRequests";
+import { useAuthStore } from '../store/useAuthStore';
+import { useStore } from '../store/useStore';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("")
+  const [notReady, setNotReady] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+
+  async function initiateLogin(){
+    setLoading(true)
+
+    if(!email || !password ){
+      setError("kindly fill all fields")
+      setNotReady(true)
+      setLoading(false)
+      return
+    }
+
+    try{
+      setError("")
+      setNotReady(false)
+      const params = {
+        "email": email,
+        "password": password
+      }
+      const response = await postRequest("/auth/login", params)
+
+      if(!response.success){
+        setError(response.message)
+        setNotReady(true)
+        return
+      }
+      setAccessToken(response.data.accessToken);
+      setLoading(false)
+      router.replace({
+        pathname: '/home',
+        params: { 
+          accessToken: response.data.accessToken,
+          refreshToken: response.data.refreshToken,
+          name: response.data.user.firstName
+        }
+      })
+      // console.log(response)
+
+    }catch (error){
+      if (error.message === "Too many authentication attempts. Please try again in 15 minutes."){
+        setError("Too many Login attempts. Please try again later.")
+        setLoading(false)
+        setNotReady(true)
+        return
+      }
+      setError("Invalid Credentials")
+      setLoading(false)
+      setNotReady(true)
+      console.error(error.message)
+    }
+  }
+
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Back Button */}
-        {/* <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity> */}
+        
 
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Log in to your applicant account</Text>
@@ -42,6 +97,7 @@ export default function LoginScreen() {
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
+              editable={!loading}
             />
           </View>
 
@@ -55,8 +111,9 @@ export default function LoginScreen() {
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
+              editable={!loading}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity disabled={loading} onPress={() => setShowPassword(!showPassword)}>
               <Ionicons
                 name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
@@ -66,12 +123,16 @@ export default function LoginScreen() {
           </View>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => router.push('/forgotPassword')}>
+          <TouchableOpacity disabled={loading} style={styles.forgotPasswordContainer} onPress={() => router.push('/forgotPassword')}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
-
+          {notReady && <View style={{marginBottom: 12,}}>
+            <Text style={{fontSize: 12, color: "#EF4444", textAlign: 'left'}}>{error}</Text>
+          </View>}
           {/* Log In Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/home')}>
+          {/* <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/home')}> */}
+          <TouchableOpacity disabled={loading} style={[styles.submitButton, loading && {backgroundColor: "#4aa66c"}]} onPress={() => initiateLogin()}>
+            {loading && <ActivityIndicator size={"small"} color={"#ffffff"} />}
             <Text style={styles.submitButtonText}>Log In</Text>
           </TouchableOpacity>
 
@@ -83,7 +144,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Google Login Button */}
-          <TouchableOpacity style={styles.googleButton} onPress={() => router.push('/resetPassword')}>
+          <TouchableOpacity disabled={loading} style={styles.googleButton} onPress={() => useStore.setState({ hasCompletedOnboarding: false })}>
             <Image source={require("../../assets/images/localImages/google.png")} style={styles.googleIcon} />
             <Text style={styles.googleButtonText}>Log in with Google</Text>
           </TouchableOpacity>
@@ -91,7 +152,7 @@ export default function LoginScreen() {
           {/* Footer Link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/signUp')}>
+            <TouchableOpacity disabled={loading} onPress={() => router.push('/signUp')}>
               <Text style={styles.signUpText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -169,7 +230,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+    display: "flex",
+    flexDirection: "row",
+    gap: 8,
   },
+
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,

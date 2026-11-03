@@ -1,374 +1,193 @@
-import { Feather } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { getNames } from 'country-list';
-import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import {
-  FlatList,
   Image,
-  Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import CustomSafeArea from '../../components/safeArea';
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
-const COUNTRY_OPTIONS = getNames(); // Automatically gets all world countries
+export default function ProfileScreen() {
+  const router = useRouter();
 
-export default function CompleteProfileScreen() {
-  const [firstName, setFirstName] = useState('Favour');
-  const [lastName, setLastName] = useState('Ekeohuru');
-  
-  // Date of birth states
-  const [date, setDate] = useState(new Date(2000, 0, 15));
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dobText, setDobText] = useState('15 Jan 2000');
-
-  // Gender dropdown states
-  const [gender, setGender] = useState('Male');
-  const [showGenderModal, setShowGenderModal] = useState(false);
-
-  // Country dropdown states
-  const [country, setCountry] = useState('Nigeria');
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const [countrySearch, setCountrySearch] = useState('');
-
-  const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setDate(selectedDate);
-      const options = { day: '2-digit', month: 'short', year: 'numeric' };
-      setDobText(selectedDate.toLocaleDateString('en-GB', options));
-    }
-  };
-
-  
-  const filteredCountries = COUNTRY_OPTIONS.filter((c) =>
-    c.toLowerCase().includes(countrySearch.toLowerCase())
-  );
+  const menuItems = [
+    { id: '1', title: 'My Profile', icon: 'person-outline', route: '/editProfile' },
+    { id: '2', title: 'Skills & Interests', icon: 'ribbon-outline', route: '/skills' },
+    { id: '3', title: 'Saved Opportunities', icon: 'bookmark-outline', route: '/saved' },
+    { id: '4', title: 'Application History', icon: 'document-text-outline', route: '/applications' },
+    { id: '5', title: 'Settings', icon: 'settings-outline', route: '/settings' },
+    { id: '6', title: 'Help & Support', icon: 'help-circle-outline', route: '/support' },
+  ];
 
   return (
     <CustomSafeArea>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         
-        {/* Title Section */}
-        <Text style={styles.titleText}>Complete your profile</Text>
-        <Text style={styles.subtitleText}>
-          This helps us give you better opportunities and personalised guidance.
-        </Text>
-
-        {/* Profile Picture Section */}
-        <View style={styles.profilePicContainer}>
-          <View style={styles.avatarWrapper}>
+        {/* User Info Header */}
+        <View style={styles.headerRow}>
+          <View style={styles.userInfoContainer}>
             <Image
-              source={{ uri: 'https://via.placeholder.com/80' }}
-              style={styles.avatarImage}
+              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop' }}
+              style={styles.avatar}
             />
-          </View>
-          <TouchableOpacity style={styles.changePhotoRow}>
-            <View style={styles.statusDot} />
-            <Text style={styles.changePhotoText}>Change photo</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* First Name & Last Name Fields */}
-        <View style={styles.rowInputs}>
-          <View style={styles.halfInputContainer}>
-            <Text style={styles.label}>First Name</Text>
-            <View style={styles.inputBox}>
-              <TextInput
-                style={styles.inputText}
-                value={firstName}
-                onChangeText={setFirstName}
-              />
+            <View>
+              <Text style={styles.nameText}>Favour Ekeohuru</Text>
+              <Text style={styles.subtext}>Graduate  •  Lagos, Nigeria</Text>
             </View>
           </View>
+          <TouchableOpacity 
+            style={styles.bellButton}
+            onPress={() => router.push('/notifications')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="notifications" size={22} color="#16A34A" />
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.halfInputContainer}>
-            <Text style={styles.label}>Last Name</Text>
-            <View style={styles.inputBox}>
-              <TextInput
-                style={styles.inputText}
-                value={lastName}
-                onChangeText={setLastName}
-              />
+        {/* Level / Career Badge Card */}
+        <View style={styles.badgeCard}>
+          <View style={styles.badgeTopRow}>
+            <View style={styles.badgeTitleRow}>
+              <Ionicons name="diamond-outline" size={18} color="#16A34A" />
+              <Text style={styles.badgeTitle}>Career Explorer</Text>
             </View>
+            <Text style={styles.levelText}>Level 2</Text>
+          </View>
+          <View style={styles.progressBarBackground}>
+            <View style={styles.progressBarFill} />
           </View>
         </View>
 
-        {/* Date of Birth */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Date of Birth</Text>
-          <TouchableOpacity 
-            style={styles.inputBoxWithIcon} 
-            activeOpacity={0.8}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.inputText}>{dobText}</Text>
-            <Feather name="calendar" size={18} color="#16A34A" />
-          </TouchableOpacity>
+        {/* Menu Items List */}
+        <View style={styles.menuContainer}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              onPress={() => {
+                if (item.route) router.push(item.route);
+              }}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name={item.icon} size={20} color="#16A34A" style={styles.menuIcon} />
+                <Text style={styles.menuTitle}>{item.title}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#16A34A" />
+            </TouchableOpacity>
+          ))}
         </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="default"
-            onValueChange={handleDateChange}
-            maximumDate={new Date()}
-          />
-        )}
-
-        {/* Gender Dropdown Trigger */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Gender</Text>
-          <TouchableOpacity 
-            style={styles.inputBoxWithIcon} 
-            activeOpacity={0.8}
-            onPress={() => setShowGenderModal(true)}
-          >
-            <Text style={styles.inputText}>{gender}</Text>
-            <Feather name="chevron-down" size={18} color="#16A34A" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Country of Residence Dropdown Trigger */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Country of Residence</Text>
-          <TouchableOpacity 
-            style={styles.inputBoxWithIcon} 
-            activeOpacity={0.8}
-            onPress={() => setShowCountryModal(true)}
-          >
-            <Text style={styles.inputText}>{country}</Text>
-            <Feather name="chevron-down" size={18} color="#16A34A" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Save & Continue Button */}
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save & Continue</Text>
-        </TouchableOpacity>
 
       </ScrollView>
-
-      {/* Gender Selection Modal */}
-      <Modal visible={showGenderModal} transparent animationType="fade">
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowGenderModal(false)}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Gender</Text>
-            <FlatList
-              data={GENDER_OPTIONS}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.modalItem} 
-                  onPress={() => { setGender(item); setShowGenderModal(false); }}
-                >
-                  <Text style={[styles.modalItemText, gender === item && styles.selectedItemText]}>{item}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Country Selection Modal with Search */}
-      <Modal visible={showCountryModal} transparent animationType="fade">
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCountryModal(false)}>
-          <View style={[styles.modalContent, { height: '70%', maxHeight: '70%' }]}>
-            <Text style={styles.modalTitle}>Select Country</Text>
-            <View style={styles.modalSearchBox}>
-              <Feather name="search" size={16} color="#9CA3AF" style={{ marginRight: 8 }} />
-              <TextInput
-                style={styles.modalSearchInput}
-                placeholder="Search country..."
-                value={countrySearch}
-                onChangeText={setCountrySearch}
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-            <FlatList
-              data={filteredCountries}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.modalItem} 
-                  onPress={() => { 
-                    setCountry(item); 
-                    setShowCountryModal(false); 
-                    setCountrySearch('');
-                  }}
-                >
-                  <Text style={[styles.modalItemText, country === item && styles.selectedItemText]}>{item}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
     </CustomSafeArea>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  titleText: {
-    fontSize: 24,
-    fontFamily: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitleText: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    color: '#4B5563',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  profilePicContainer: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  avatarWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    overflow: 'hidden',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  changePhotoRow: {
+  // container: {
+  //   paddingHorizontal: 20,
+  //   paddingVertical: 16,
+  // },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'between',
+    marginBottom: 20,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#16A34A',
-    marginRight: 6,
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  changePhotoText: {
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 14,
+  },
+  nameText: {
+    fontFamily: 'bold',
+    fontSize: 18,
+    color: '#111827',
+    marginBottom: 2,
+  },
+  subtext: {
+    fontFamily: 'regular',
     fontSize: 13,
-    fontFamily: 'semiBold',
-    color: '#111827',
+    color: '#D97706', // Muted orange-gold accent as shown in design
   },
-  rowInputs: {
+  bellButton: {
+    padding: 8,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 20,
+  },
+  badgeCard: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  badgeTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  halfInputContainer: {
-    width: '48%',
+  badgeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  inputContainer: {
-    marginBottom: 16,
+  badgeTitle: {
+    fontFamily: 'semiBold',
+    fontSize: 14,
+    color: '#16A34A',
   },
-  label: {
-    fontSize: 12,
-    fontFamily: 'regular',
+  levelText: {
+    fontFamily: 'semiBold',
+    fontSize: 13,
     color: '#4B5563',
-    marginBottom: 6,
   },
-  inputBox: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    height: 50,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+  progressBarBackground: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    overflow: 'hidden',
   },
-  inputBoxWithIcon: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    height: 50,
-    paddingHorizontal: 16,
+  progressBarFill: {
+    width: '65%',
+    height: '100%',
+    backgroundColor: '#16A34A',
+    borderRadius: 3,
+  },
+  menuContainer: {
+    gap: 4,
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-  },
-  inputText: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    color: '#111827',
-  },
-  saveButton: {
-    backgroundColor: '#16A34A',
-    borderRadius: 12,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontFamily: 'semiBold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '85%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: '50%',
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontFamily: 'bold',
-    color: '#111827',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalSearchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
-    marginBottom: 12,
-  },
-  modalSearchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'regular',
-    color: '#111827',
-  },
-  modalItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
-  modalItemText: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    color: '#374151',
-    textAlign: 'center',
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
-  selectedItemText: {
-    fontFamily: 'bold',
-    color: '#16A34A',
+  menuIcon: {
+    width: 24,
+  },
+  menuTitle: {
+    fontFamily: 'regular',
+    fontSize: 15,
+    color: '#1F2937',
   },
 });

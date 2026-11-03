@@ -1,32 +1,64 @@
 import {
-    Feather,
-    FontAwesome5,
-    Ionicons,
-    MaterialIcons,
-    Octicons,
+  Feather,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+  Octicons,
 } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { getRequest } from "../../api/getRequests";
 import CustomSafeArea from '../../components/safeArea';
 
 export default function HomeScreen() {
+
+  const [progress, setProgress] = useState(0)
+  const [homeData, setHomeData] = useState(null)
+  const [showAll, setShowAll] = useState(false);
+  const scrollRef = useRef(null);
+  const sectionRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+
+  const params = useLocalSearchParams();
+  // console.log(params)
+
+  async function fetchData() {
+   setLoading(true);
+   try {
+     const profile = await getRequest("/profile");
+     const homeDataResponse = await getRequest("/home");
+     setProgress(profile.data.completion.percentage);
+     setHomeData(homeDataResponse);
+   } catch (error) {
+     console.error(error);
+   } finally {
+     setLoading(false);
+   }
+  }
+
+  // console.log(homeData?.data?.recommendedOpportunities)
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <CustomSafeArea>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Header Section */}
         <View style={styles.header}>
           <View>
             <Text style={styles.greetingText}>Good morning,</Text>
-            <Text style={styles.nameText}>Favour</Text>
+            <Text style={styles.nameText}>{params.name}</Text>
           </View>
           <TouchableOpacity style={styles.giftIconContainer}>
             <Feather name="gift" size={24} color="#16A34A" />
@@ -63,9 +95,9 @@ export default function HomeScreen() {
           {/* Progress Bar */}
           <View style={styles.progressBarRow}>
             <View style={styles.progressBarBackground}>
-              <View style={[styles.progressBarFill, { width: '70%' }]} />
+              <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
             </View>
-            <Text style={styles.progressPercentage}>70%</Text>
+            <Text style={styles.progressPercentage}>{progress}%</Text>
           </View>
 
           {/* Complete Profile Button */}
@@ -125,25 +157,84 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Recommended Section */}
-        <View style={styles.sectionHeader}>
+        {/* Recommended Section Header */}
+        <View 
+          style={styles.sectionHeader} 
+          ref={sectionRef} 
+          onLayout={(e) => { 
+            sectionRef.current = e.nativeEvent.layout.y; 
+          }}
+        >
           <Text style={styles.sectionTitle}>Recommended for you</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewAllText}>View all</Text>
+          <TouchableOpacity onPress={() => {
+            const nextState = !showAll;
+            setShowAll(nextState);
+            if (nextState && scrollRef.current) {
+              scrollRef.current.scrollTo({ y: sectionRef.current || 200, animated: true });
+            }
+          }}>
+            <Text style={styles.viewAllText}>{showAll ? 'Show less' : 'View all'}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Job Card */}
-        <TouchableOpacity style={styles.jobCard}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/40' }}
-            style={styles.companyLogo}
-          />
-          <View style={styles.jobDetails}>
-            <Text style={styles.jobTitle}>Management Trainee Programme</Text>
-            <Text style={styles.companyName}>Dangote Group</Text>
-          </View>
-        </TouchableOpacity>
+        {loading ? (
+          // Skeleton Loader View
+          [1].map((_, index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <View style={styles.skeletonLineShort} />
+              <View style={styles.skeletonLineLong} />
+              <View style={styles.skeletonMetaRow}>
+                <View style={styles.skeletonBadge} />
+                <View style={styles.skeletonBadge} />
+              </View>
+            </View>
+          ))
+        ) : (
+          // Normal Data Cards
+          (showAll ? homeData?.data?.recommendedOpportunities : homeData?.data?.recommendedOpportunities?.slice(0, 1))?.map((item) => (
+            <TouchableOpacity 
+              key={item.id} 
+              style={styles.jobCard} 
+              activeOpacity={0.8}
+              onPress={() => router.push(`/opportunity/${item.id}`)}
+            >
+              <View style={styles.cardTopRow}>
+                <View style={styles.jobDetails}>
+                  <Text style={styles.jobTitle} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.companyName}>
+                    {item.organisation} • {item.location}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#16A34A" />
+              </View>
+
+              <View style={styles.metaRow}>
+                <View style={[styles.badge, item.trustLabel === 'SOURCE_VERIFIED' ? styles.verifiedBadge : styles.reportedBadge]}>
+                  <Ionicons 
+                    name={item.trustLabel === 'SOURCE_VERIFIED' ? "checkmark-circle" : "alert-circle"} 
+                    size={12} 
+                    color={item.trustLabel === 'SOURCE_VERIFIED' ? "#16A34A" : "#D97706"} 
+                  />
+                  <Text style={[styles.badgeText, item.trustLabel === 'SOURCE_VERIFIED' ? styles.verifiedText : styles.reportedText]}>
+                    {item.trustLabel === 'SOURCE_VERIFIED' ? 'Verified' : 'User Reported'}
+                  </Text>
+                </View>
+
+                <View style={styles.tagBadge}>
+                  <Text style={styles.tagText}>{item.type.replace('_', ' ')}</Text>
+                </View>
+
+                <View style={styles.tagBadge}>
+                  <Text style={styles.tagText}>{item.workMode}</Text>
+                </View>
+              </View>
+
+              <View style={styles.footerRow}>
+                <Text style={styles.deadlineText}>Deadline: {item.deadline}</Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
 
       </ScrollView>
 
@@ -363,6 +454,138 @@ const styles = StyleSheet.create({
     fontFamily: 'regular',
     color: '#9CA3AF',
     marginTop: 2,
+  },
+  jobCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#8f8f8f',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  jobDetails: {
+    flex: 1,
+  },
+  jobTitle: {
+    fontFamily: 'semiBold',
+    fontSize: 15,
+    color: '#111827',
+    marginBottom: 2,
+  },
+  companyName: {
+    fontFamily: 'regular',
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  verifiedBadge: {
+    backgroundColor: '#F0FDF4',
+  },
+  reportedBadge: {
+    backgroundColor: '#FEF3C7',
+  },
+  badgeText: {
+    fontFamily: 'semiBold',
+    fontSize: 11,
+  },
+  verifiedText: {
+    color: '#16A34A',
+  },
+  reportedText: {
+    color: '#D97706',
+  },
+  tagBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagText: {
+    fontFamily: 'regular',
+    fontSize: 11,
+    color: '#4B5563',
+  },
+  footerRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 8,
+    alignItems: 'flex-end',
+  },
+  deadlineText: {
+    fontFamily: 'regular',
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+  expandedContent: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 12,
+  },
+  viewAllContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  viewAllButtonText: {
+    fontFamily: 'semiBold',
+    fontSize: 14,
+    color: '#16A34A',
+  },
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  skeletonLineShort: {
+    width: '60%',
+    height: 14,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonLineLong: {
+    width: '40%',
+    height: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    marginBottom: 14,
+  },
+  skeletonMetaRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  skeletonBadge: {
+    width: 70,
+    height: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
   },
 });
 

@@ -2,29 +2,66 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import { useEffect, useRef, useState, } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from '../store/useAuthStore';
+import { useStore } from '../store/useStore';
 
 export default function OnboardingScreen() {
   const pagerRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const checked = useRef(false);
+
+  const hasCompletedOnboarding = useStore((state) => state.hasCompletedOnboarding);
+
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  useEffect(() => {
+    if (checked.current) return;
+    checked.current = true;
+
+    // Check if user is already logged in via stored access token
+    if (accessToken) {
+      router.replace('/home');
+      return;
+    }
+
+    if (hasCompletedOnboarding) {
+      router.replace('/login');
+    } else {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+
+if (loading) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <ActivityIndicator size="large" color="#31AC04" />
+    </SafeAreaView>
+  );
+}
+
 
   const handleNext = () => {
     if (currentPage < 1) {
       pagerRef.current?.setPage(currentPage + 1);
     } else {
       // Navigate to your Auth/Home screen here
+      useStore.setState({ hasCompletedOnboarding: true });
       router.replace('/signUp');
     }
   };
+
+  
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
-        {/* <Image source={require('../../assets/images/localImages/logo.png')} style={styles.logo}  resizeMode="contain"/> */}
         <TouchableOpacity onPress={() => router.replace('/login')}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
@@ -108,14 +145,14 @@ export default function OnboardingScreen() {
           <Text style={styles.buttonText}> {currentPage === 0 ? "Next" : "Get Started"}</Text>
         </TouchableOpacity>
 
-        {currentPage === 1 && (
+        {/* {currentPage === 1 && (
           <View style={styles.footerTextRow}>
             <Text style={styles.grayText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.replace('/signUp')}>
               <Text style={styles.signUpText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-        )}
+        )} */}
       </View>
     </SafeAreaView>
   );

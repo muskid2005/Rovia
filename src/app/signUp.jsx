@@ -2,14 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { postRequest } from "../api/postRequests";
+import CustomModal from '../components/customModal';
 
 export default function SignUpScreen() {
   const [firstName, setFirstName] = useState('');
@@ -20,17 +23,83 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [error, setError] = useState("")
+  const [notReady, setNotReady] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  async function createAccount(){
+    setLoading(true)
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      setNotReady(true);
+      setError("Kindly use an email address ending with @gmail.com");
+      setLoading(false);
+      return;
+    }
+
+    if(!firstName  || !lastName || !email || !password || !confirmPassword){
+      setError("kindly fill all fields")
+      setNotReady(true)
+      setLoading(false)
+      return
+    }
+
+    if(password !== confirmPassword){
+      setError("Password Mismatched")
+      setNotReady(true)
+      setLoading(false)
+      return
+    }
+
+    try{
+      setError("")
+      setNotReady(false)
+      const params = {
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": email,
+        "password": password
+      }
+      
+      const response = await postRequest("/auth/register", params)
+      if(!response.success){
+        setError(response.message)
+        setNotReady(true)
+        setLoading(false)
+        return
+      }
+      setLoading(false)
+      setSuccess(true)
+      
+      // 
+    }catch (error){
+      setNotReady(true)
+      const check = error.message
+      if (check === "An account with this email already exists"){
+        setError("An account with this email already exists")
+      } else {
+        setError("your password must include a uppercase, lowercase, number and a symbol")
+      }
+      setLoading(false)
+    }
+  }
+  
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Back Button */}
-        {/* <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity> */}
 
-        {/* Header Titles */}
+        <CustomModal 
+          visible={success}
+          title="Success"
+          message="Account Created Successfully. "
+          onClose={() => {
+            setSuccess(false);
+            router.replace('/login');
+          }}
+        />
+
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Sign up to apply for jobs</Text>
 
@@ -46,6 +115,7 @@ export default function SignUpScreen() {
               placeholderTextColor="#9CA3AF"
               value={firstName}
               onChangeText={setFirstName}
+              editable={!loading}
             />
           </View>
 
@@ -58,6 +128,7 @@ export default function SignUpScreen() {
               placeholderTextColor="#9CA3AF"
               value={lastName}
               onChangeText={setLastName}
+              editable={!loading}
             />
           </View>
 
@@ -72,6 +143,7 @@ export default function SignUpScreen() {
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
+              editable={!loading}
             />
           </View>
 
@@ -79,6 +151,7 @@ export default function SignUpScreen() {
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#6B7280" style={styles.icon} />
             <TextInput
+              editable={!loading}
               style={styles.input}
               placeholder="Password"
               placeholderTextColor="#9CA3AF"
@@ -86,7 +159,7 @@ export default function SignUpScreen() {
               value={password}
               onChangeText={setPassword}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity disabled={loading} onPress={() => setShowPassword(!showPassword)}>
               <Ionicons
                 name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
@@ -105,8 +178,9 @@ export default function SignUpScreen() {
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
+              editable={!loading}
             />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <TouchableOpacity disabled={loading} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
               <Ionicons
                 name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
@@ -120,6 +194,7 @@ export default function SignUpScreen() {
             <TouchableOpacity
               style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}
               onPress={() => setAgreeTerms(!agreeTerms)}
+              disabled={loading}
             >
               {agreeTerms && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
             </TouchableOpacity>
@@ -128,16 +203,20 @@ export default function SignUpScreen() {
               <Text style={styles.linkText}>Privacy Policy</Text>
             </Text>
           </View>
-
+          {notReady && <View style={{marginBottom: 12,}}>
+            <Text style={{fontSize: 12, color: "#EF4444", textAlign: 'right'}}>{error}</Text>
+          </View>}
           {/* Create Account Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/linkSent')}>
+          <TouchableOpacity style={[styles.submitButton, loading && {backgroundColor: "#4aa66c"}]} disabled={loading} onPress={() => createAccount()}>
+          {/* <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/linkSent')}> */}
+          {loading && <ActivityIndicator size={"small"} color={"#ffffff"} />}
             <Text style={styles.submitButtonText}>Create Account</Text>
           </TouchableOpacity>
 
           {/* Footer Navigation Link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
+            <TouchableOpacity disabled={loading} onPress={() => router.push('/login')}>
               <Text style={styles.signInText}>Sign In</Text>
             </TouchableOpacity>
           </View>
@@ -237,8 +316,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#16A34A',
     height: 50,
     borderRadius: 12,
+    display: "flex",
+    flexDirection: "row",
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 8
   },
   submitButtonText: {
     color: '#FFFFFF',
