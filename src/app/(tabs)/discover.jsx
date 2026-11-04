@@ -1,63 +1,33 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { getRequest } from "../../api/getRequests";
+import FilterPanel from '../../components/FilterPanel';
 import CustomSafeArea from '../../components/safeArea';
 
 const CATEGORIES = ['All', 'Graduate', 'NYSC', 'Internship'];
 
-const OPPORTUNITIES = [
-  {
-    id: '1',
-    matchType: 'Strong Match',
-    matchColor: '#16A34A',
-    matchBg: '#DCFCE7',
-    matchIcon: 'checkmark-circle',
-    title: 'Management Trainee Programme',
-    company: 'Dangote Group',
-    location: 'Lagos, Nigeria · Full-time',
-    tags: ['Graduate', 'Management', 'Fresh Graduate'],
-    deadline: '20 Nov 2026',
-    isBookmarked: false,
-  },
-  {
-    id: '2',
-    matchType: 'Good Match',
-    matchColor: '#D97706',
-    matchBg: '#FEF3C7',
-    matchIcon: 'alert-circle',
-    title: 'Customer Service Representative',
-    company: 'Access Bank',
-    location: 'Abuja, Nigeria · Full-time',
-    tags: ['NYSC', 'Customer Service', 'Entry Level'],
-    deadline: '15 Nov 2026',
-    isBookmarked: false,
-  },
-  {
-    id: '3',
-    matchType: 'Needs Preparation',
-    matchColor: '#D97706',
-    matchBg: '#FEF3C7',
-    matchIcon: 'time',
-    title: 'Data Analyst (Graduate Program)',
-    company: 'MTN Nigeria',
-    location: 'Lagos, Nigeria · Full-time',
-    tags: ['Graduate', 'Data & Analytics'],
-    deadline: '30 Nov 2026',
-    isBookmarked: false,
-  },
-];
-
 export default function DiscoverScreen() {
+  const [opportunities, setOpportunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [opportunities, setOpportunities] = useState(OPPORTUNITIES);
+  const [showFilter, setShowFilter] = useState(false);
+const [selectedFilters, setSelectedFilters] = useState({});
+
 
   const toggleBookmark = (id) => {
     setOpportunities((prev) =>
@@ -67,83 +37,249 @@ export default function DiscoverScreen() {
     );
   };
 
+  const getTrustBadgeConfig = (label) => {
+    switch (label) {
+      case 'OFFICIALLY_VERIFIED':
+        return { text: 'Officially Verified', bg: '#DCFCE7', color: '#16A34A', icon: 'checkmark-circle' };
+      case 'SOURCE_VERIFIED':
+        return { text: 'Source Verified', bg: '#DCFCE7', color: '#16A34A', icon: 'checkmark-circle' };
+      case 'USER_REPORTED':
+      default:
+        return { text: 'User Reported', bg: '#FEF3C7', color: '#D97706', icon: 'alert-circle' };
+    }
+  };
+
+ 
+
+async function fetchOpportunities(pageToFetch = 1, isAppending = false, filters = selectedFilters) {
+    if (isAppending) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      let endpoint = `/opportunities?page=${pageToFetch}&limit=10`;
+
+      // Search Query
+      if (searchQuery && searchQuery.trim() !== '') {
+        endpoint += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      }
+
+      // Opportunity Type
+      const activeType = filters?.type || (selectedCategory !== 'All' ? selectedCategory.toUpperCase() : null);
+      if (activeType && activeType.trim() !== '') {
+        endpoint += `&type=${encodeURIComponent(activeType.trim())}`;
+      }
+
+      // Work Mode (REMOTE, HYBRID, ONSITE)
+      if (filters?.workMode && filters.workMode.trim() !== '') {
+        endpoint += `&workMode=${encodeURIComponent(filters.workMode.trim())}`;
+      }
+
+      // Country
+      if ((filters?.location || filters?.country) && (filters.location || filters.country).trim() !== '') {
+        const countryVal = (filters.location || filters.country).trim();
+        endpoint += `&country=${encodeURIComponent(countryVal)}`;
+      }
+
+      // Career Level
+      if (filters?.careerLevel) {
+        endpoint += `&careerLevel=${encodeURIComponent(filters.careerLevel)}`;
+      }
+
+      // Sort
+      if (filters?.sort) {
+        endpoint += `&sort=${encodeURIComponent(filters.sort)}`;
+      }
+
+      const response = await getRequest(endpoint);
+      console.log(opportunities)
+      const fetchedData = response?.data?.opportunities || response?.opportunities || [];
+      const paginationInfo = response?.data?.pagination || response?.pagination;
+
+      if (isAppending) {
+        setOpportunities((prev) => [...prev, ...fetchedData]);
+      } else {
+        setOpportunities(fetchedData);
+      }
+
+      if (paginationInfo) {
+        setCurrentPage(paginationInfo.currentPage || pageToFetch);
+        setTotalPages(paginationInfo.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Failed to fetch opportunities:', error?.response?.data);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }
+
+  const handleScroll = (event) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
+
+    if (isCloseToBottom && !loading && !loadingMore && currentPage < totalPages) {
+      fetchOpportunities(currentPage + 1, true);
+    }
+  };
+
+  useEffect(() => {
+    fetchOpportunities();
+  }, [selectedCategory, searchQuery]);
+
   return (
     <CustomSafeArea>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
+      >
         
+        {/* Header Section */}
+        {/* <View style={styles.header}>
+          <Text style={styles.headerTitle}>Discover</Text>
+          <TouchableOpacity style={styles.filterIconButton} onPress={()=> router.push(`/(subScreens)/filter`)}>
+            <Feather name="sliders" size={20} color="#111827" />
+          </TouchableOpacity>
+        </View> */}
+
         {/* Header Section */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Discover</Text>
-          <TouchableOpacity style={styles.filterIconButton}>
+          <TouchableOpacity style={styles.filterIconButton} onPress={() => setShowFilter(!showFilter)}>
             <Feather name="sliders" size={20} color="#111827" />
           </TouchableOpacity>
         </View>
 
-        {/* Categories Filter Pills */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.categoriesContainer}
-        >
-          {CATEGORIES.map((category) => {
-            const isActive = selectedCategory === category;
-            return (
-              <TouchableOpacity
-                key={category}
-                style={[styles.categoryPill, isActive && styles.activeCategoryPill]}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text style={[styles.categoryText, isActive && styles.activeCategoryText]}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        {/* Conditionally Render Filter Panel */}
+        {showFilter && (
+          <FilterPanel 
+            onApplyFilters={(filters) => {
+              setSelectedFilters(filters);
+              setShowFilter(false);
+              // Trigger your fetch with these filters!
+              fetchOpportunities(1, false, filters);
+            }} 
+            onClose={() => setShowFilter(false)} 
+          />
+        )}
+
+{/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Feather name="search" size={18} color="#9CA3AF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search opportunities, skills, or keywords..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={() => fetchOpportunities(1, false)}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity 
+              onPress={() => {
+                setSearchQuery('');
+                fetchOpportunities(1, false); // Resets the list back to default
+              }}
+              style={styles.clearIconButton}
+            >
+              <Feather name="x" size={16} color="#6B7280" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Opportunity Cards List */}
-        {opportunities.map((item) => (
-          <Pressable key={item.id} style={styles.card} onPress={()=>router.push(`/opportunityDetail`)}>
-            
-            {/* Card Header: Match Badge & Bookmark */}
-            <View style={styles.cardTopRow}>
-              <View style={[styles.matchBadge, { backgroundColor: item.matchBg }]}>
-                <Ionicons name={item.matchIcon} size={14} color={item.matchColor} style={styles.matchIcon} />
-                <Text style={[styles.matchText, { color: item.matchColor }]}>{item.matchType}</Text>
+        {loading ? (
+          [1, 2, 3, 4, 5, 6, 7].map((_, index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <View style={styles.skeletonLineShort} />
+              <View style={styles.skeletonLineLong} />
+              <View style={styles.skeletonMetaRow}>
+                <View style={styles.skeletonBadge} />
+                <View style={styles.skeletonBadge} />
               </View>
-              <TouchableOpacity onPress={() => toggleBookmark(item.id)}>
-                <Feather 
-                  name={item.isBookmarked ? "bookmark" : "bookmark"} 
-                  size={20} 
-                  color={item.isBookmarked ? "#16A34A" : "#6B7280"} 
-                />
-              </TouchableOpacity>
             </View>
+          ))
+        ) : opportunities.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No opportunities found.</Text>
+          </View>
+        ) : (
+          opportunities.map((item) => (
+            <Pressable 
+              key={item.id} 
+              style={styles.card} 
+              onPress={() => router.push(`/(subScreens)/opportunityApplication/opportunityDetail?id=${item.id}`)}
+            >
+              <View style={styles.cardTopRow}>
+                {(() => {
+                  const badge = getTrustBadgeConfig(item.trustLabel);
+                  return (
+                    <View style={[styles.matchBadge, { backgroundColor: badge.bg }]}>
+                      <Ionicons name={badge.icon} size={14} color={badge.color} style={styles.matchIcon} />
+                      <Text style={[styles.matchText, { color: badge.color }]}>
+                        {badge.text}
+                      </Text>
+                    </View>
+                  );
+                })()}
 
-            {/* Job Title & Company */}
-            <Text style={styles.jobTitle}>{item.title}</Text>
-            <Text style={styles.companyName}>{item.company}</Text>
+                {item.status && (
+                  <View style={[styles.statusBadge, item.status === 'CLOSING_SOON' ? styles.closingSoonBadge : styles.activeBadge]}>
+                    <Text style={[styles.statusText, item.status === 'CLOSING_SOON' ? styles.closingSoonText : styles.activeText]}>
+                      {item.status.replace('_', ' ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-            {/* Location & Type */}
-            <View style={styles.locationRow}>
-              <Feather name="map-pin" size={14} color="#16A34A" style={styles.locationIcon} />
-              <Text style={styles.locationText}>{item.location}</Text>
-            </View>
+              <Text style={styles.jobTitle}>{item.title}</Text>
+              <Text style={styles.companyName}>{item.organisation}</Text>
 
-            {/* Tags Row */}
-            <View style={styles.tagsRow}>
-              {item.tags.map((tag, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
+              <View style={styles.locationRow}>
+                <Feather name="map-pin" size={14} color="#16A34A" style={styles.locationIcon} />
+                <Text style={styles.locationText}>{item.location}{item.country ? `, ${item.country}` : ''}</Text>
+              </View>
+
+              <View style={styles.tagsRow}>
+                {[item.type?.replace('_', ' '), item.workMode].filter(Boolean).map((tag, index) => (
+                  <View key={index} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.deadlineText}>
+                {item.deadline ? `Deadline: ${item.deadline}` : 'No deadline specified'}
+              </Text>
+
+            </Pressable>
+          ))
+        )}
+
+{/* Render bottom skeletons and loader when fetching the next page */}
+        {loadingMore && (
+          <>
+            {[1, 2, 3, 4, 5, 6, 7].map((_, index) => (
+              <View key={`skeleton-${index}`} style={styles.skeletonCard}>
+                <View style={styles.skeletonLineShort} />
+                <View style={styles.skeletonLineLong} />
+                <View style={styles.skeletonMetaRow}>
+                  <View style={styles.skeletonBadge} />
+                  <View style={styles.skeletonBadge} />
                 </View>
-              ))}
+              </View>
+            ))}
+            <View style={styles.footerLoaderContainer}>
+              <ActivityIndicator size="small" color="#16A34A" />
+              <Text style={styles.footerLoaderText}>Loading more opportunities...</Text>
             </View>
-
-            {/* Deadline */}
-            <Text style={styles.deadlineText}>Deadline: {item.deadline}</Text>
-
-          </Pressable>
-        ))}
+          </>
+        )}
 
       </ScrollView>
     </CustomSafeArea>
@@ -151,9 +287,23 @@ export default function DiscoverScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 40,
+  clearIconButton: {
+    padding: 4,
+    marginLeft: 4,
   },
+  footerLoaderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  footerLoaderText: {
+    fontSize: 12,
+    fontFamily: 'medium',
+    color: '#6B7280',
+  },
+  
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -162,77 +312,91 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: 'bold',
+    fontFamily: 'semiBold',
     color: '#111827',
   },
   filterIconButton: {
-    padding: 4,
-  },
-  categoriesContainer: {
-    paddingBottom: 16,
-    gap: 8,
-  },
-  categoryPill: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    padding: 8,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 48,
+  },
+  searchIcon: {
     marginRight: 8,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  activeCategoryPill: {
-    backgroundColor: '#16A34A',
-    borderColor: '#16A34A',
-  },
-  categoryText: {
+  searchInput: {
+    flex: 1,
     fontSize: 14,
     fontFamily: 'regular',
-    color: '#374151',
-  },
-  activeCategoryText: {
-    fontFamily: 'semi-bold',
-    color: '#FFFFFF',
+    color: '#111827',
   },
   card: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
   },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   matchBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 6,
   },
   matchIcon: {
     marginRight: 4,
   },
   matchText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'semiBold',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  activeBadge: {
+    backgroundColor: '#DCFCE7',
+  },
+  closingSoonBadge: {
+    backgroundColor: '#FEE2E2',
+  },
+  activeText: {
+    fontSize: 10,
+    fontFamily: 'semiBold',
+    color: '#16A34A',
+  },
+  closingSoonText: {
+    fontSize: 10,
+    fontFamily: 'semiBold',
+    color: '#DC2626',
   },
   jobTitle: {
     fontSize: 16,
-    fontFamily: 'bold',
+    fontFamily: 'semiBold',
     color: '#111827',
     marginBottom: 4,
   },
   companyName: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'regular',
     color: '#4B5563',
     marginBottom: 8,
@@ -246,7 +410,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   locationText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'regular',
     color: '#6B7280',
   },
@@ -257,21 +421,61 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tag: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 4,
-    marginBottom: 4,
+    borderRadius: 6,
   },
   tagText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'regular',
-    color: '#1D4ED8',
+    color: '#374151',
   },
   deadlineText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'regular',
+    color: '#9CA3AF',
+  },
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  skeletonLineShort: {
+    width: '60%',
+    height: 14,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonLineLong: {
+    width: '40%',
+    height: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    marginBottom: 14,
+  },
+  skeletonMetaRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  skeletonBadge: {
+    width: 70,
+    height: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
     color: '#6B7280',
+    fontFamily: 'regular',
   },
 });

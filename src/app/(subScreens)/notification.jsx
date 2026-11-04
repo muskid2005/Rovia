@@ -1,158 +1,148 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { getRequest } from '../../api/getRequests';
 import CustomSafeArea from '../../components/safeArea';
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const notifications = [
-    {
-      id: '1',
-      title: 'Your application status has been updated',
-      subtitle: 'Management Trainee Programme  •  2h ago',
-      icon: 'alert-circle-outline',
-      iconColor: '#EF4444',
-      iconBg: '#FEE2E2',
-    },
-    {
-      id: '2',
-      title: 'New opportunity matches your profile',
-      subtitle: 'Data Analyst (Graduate Program)  •  4h ago',
-      icon: 'star-outline',
-      iconColor: '#D97706',
-      iconBg: '#FEF3C7',
-    },
-    {
-      id: '3',
-      title: 'Reminder: Interview tomorrow',
-      subtitle: 'Access Bank  •  1d ago',
-      icon: 'calendar-outline',
-      iconColor: '#0284C7',
-      iconBg: '#E0F2FE',
-    },
-    {
-      id: '4',
-      title: 'A new discussion is live',
-      subtitle: 'Career Growth  •  1d ago',
-      icon: 'diamond-outline',
-      iconColor: '#16A34A',
-      iconBg: '#F0FDF4',
-    },
-    {
-      id: '5',
-      title: 'Your profile is 70% complete',
-      subtitle: 'Complete it to get better matches  •  1d ago',
-      icon: 'checkmark-circle-outline',
-      iconColor: '#D97706',
-      iconBg: '#FEF3C7',
-      isWarning: true,
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchNotifications() {
+      setLoading(true);
+      try {
+        const response = await getRequest('/notifications?page=1&limit=20');
+        console.log("RAW NOTIFICATIONS RESPONSE:", response);
+        
+        // Adjust data path safely based on what shows up in your console log
+        const data = response?.data?.notifications || response?.notifications || response?.data || [];
+        
+        if (isMounted) {
+          setNotifications(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <CustomSafeArea>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* Header Row */}
-        <View style={styles.headerRow}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={20} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          <View style={styles.placeholderIcon} />
-        </View>
+        {/* Header Title */}
+        <Text style={styles.headerTitle}>Notifications</Text>
 
-        {/* Notification Cards List */}
-        <View style={styles.listContainer}>
-          {notifications.map((item) => (
-            <View key={item.id} style={styles.notificationCard}>
-              <View style={[styles.iconContainer, { backgroundColor: item.iconBg }]}>
-                <Ionicons name={item.icon} size={20} color={item.iconColor} />
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.notificationTitle}>{item.title}</Text>
-                <Text style={[styles.notificationSubtitle, item.isWarning && styles.warningText]}>
-                  {item.subtitle}
-                </Text>
-              </View>
+        {loading ? (
+          // Skeleton Loader State
+          [1, 2, 3, 4, 5].map((_, index) => (
+            <View key={index} style={styles.skeletonCard}>
+              <View style={styles.skeletonLineShort} />
+              <View style={styles.skeletonLineLong} />
             </View>
-          ))}
-        </View>
-
+          ))
+        ) : notifications.length === 0 ? (
+          // Clean Empty State when backend returns an empty array
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>No notifications yet</Text>
+            <Text style={styles.emptySubtitle}>We'll notify you when something important arrives.</Text>
+          </View>
+        ) : (
+          notifications.map((item, index) => (
+            <View key={item.id || index} style={styles.notificationItem}>
+              <Text style={styles.notificationTitle}>{item.title}</Text>
+              <Text style={styles.notificationSubtitle}>{item.message || item.body}  ·  {item.timeAgo || item.createdAt}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </CustomSafeArea>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  backButton: {
-    padding: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 20,
+  scrollContent: {
+    paddingBottom: 40,
   },
   headerTitle: {
-    fontFamily: 'bold',
-    fontSize: 20,
+    fontSize: 26,
+    fontFamily: 'semiBold',
     color: '#111827',
+    marginBottom: 20,
   },
-  placeholderIcon: {
-    width: 36,
-  },
-  listContainer: {
-    gap: 16,
-  },
-  notificationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    gap: 14,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textContainer: {
-    flex: 1,
+  notificationItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   notificationTitle: {
+    fontSize: 15,
     fontFamily: 'semiBold',
-    fontSize: 14,
     color: '#111827',
     marginBottom: 4,
   },
   notificationSubtitle: {
+    fontSize: 13,
     fontFamily: 'regular',
-    fontSize: 12,
     color: '#6B7280',
   },
-  warningText: {
-    color: '#D97706',
+  // Skeleton Styles
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 8,
+  },
+  skeletonLineShort: {
+    width: '75%',
+    height: 15,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+  },
+  skeletonLineLong: {
+    width: '45%',
+    height: 13,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 16,
     fontFamily: 'semiBold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontFamily: 'regular',
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });

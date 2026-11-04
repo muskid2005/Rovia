@@ -1,26 +1,113 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+
+
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
-  Image,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { getRequest } from '../../api/getRequests';
+import CustomModal from '../../components/customModal';
 import CustomSafeArea from '../../components/safeArea';
 
 export default function ProfileScreen() {
   const router = useRouter();
 
-  const menuItems = [
-    { id: '1', title: 'My Profile', icon: 'person-outline', route: '/editProfile' },
-    { id: '2', title: 'Skills & Interests', icon: 'ribbon-outline', route: '/skills' },
-    { id: '3', title: 'Saved Opportunities', icon: 'bookmark-outline', route: '/saved' },
-    { id: '4', title: 'Application History', icon: 'document-text-outline', route: '/applications' },
-    { id: '5', title: 'Settings', icon: 'settings-outline', route: '/settings' },
-    { id: '6', title: 'Help & Support', icon: 'help-circle-outline', route: '/support' },
+  // Profile Data & Loading States
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Custom Modal States
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+
+  const showCustomModal = (title, message) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalVisible(true);
+  };
+
+  // Fetch Profile automatically when screen loads or gains focus
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      async function fetchProfile() {
+        setLoading(true);
+        try {
+          const response = await getRequest('/profile');
+          const data = response?.data || response;
+          
+          if (isMounted) {
+            setProfileData(data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            'Could not fetch profile details.';
+          showCustomModal('Error', errorMessage);
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      }
+
+      fetchProfile();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
+  // Helper to extract initials for avatar (e.g. "Favour Ekeohuru" -> "FE")
+  const getInitials = (name) => {
+    if (!name) return 'Fm';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  };
+
+  // const menuItems = [
+  //   { id: '1', title: 'My Profile', icon: 'person-outline', route: '/(subScreens)/profile/fullProfile' },
+  //   { id: '2', title: 'Skills & Interests', icon: 'ribbon-outline', route: '/(subScreens)/opportunityApplication/skill' },
+  //   { id: '3', title: 'Saved Opportunities', icon: 'bookmark-outline', route: '/(subScreens)/savedOpportunities' },
+  //   // { id: '4', title: 'Application History', icon: 'document-text-outline', route: '/applications' },
+  //   { id: '5', title: 'Settings', icon: 'settings-outline', route: '/setting' },
+  //   { id: '3', title: 'Career Goals', icon: 'flag-outline', route: '/(subScreens)/profile/careerGoals' },
+  //   { id: '4', title: 'Education', icon: 'school-outline', route: '/(subScreens)/profile/education' },
+  //   // { id: '6', title: 'Help & Support', icon: 'help-circle-outline', route: '/support' },
+  // ];
+
+   const menuItems = [
+    { id: '1', title: 'My Profile', icon: 'person-outline', route: '/(subScreens)/profile/fullProfile' },
+    { id: '2', title: 'Skills & Interests', icon: 'ribbon-outline', route: '/(subScreens)/opportunityApplication/skill' },
+    { id: '3', title: 'Career Goals', icon: 'flag-outline', route: '/(subScreens)/career' },
+    { id: '4', title: 'Education', icon: 'school-outline', route: '/(subScreens)/education' },
+    { id: '5', title: 'Experience', icon: 'briefcase-outline', route: '/(subScreens)/experience' },
+    { id: '6', title: 'Certifications', icon: 'medal-outline', route: '/(subScreens)/certification' },
+    { id: '7', title: 'Saved Opportunities', icon: 'bookmark-outline', route: '/(subScreens)/savedOpportunities' },
+    // { id: '8', title: 'Application History', icon: 'document-text-outline', route: '/applications' },
+    { id: '9', title: 'Settings', icon: 'settings-outline', route: '/setting' },
+    // { id: '10', title: 'Help & Support', icon: 'help-circle-outline', route: '/support' },
   ];
+
+  // Optional: Extract dynamic user details or fallback to default UI
+
+  const firstName = profileData?.profile.user.firstName || profileData?.name || '';
+  const lastName = profileData?.profile.user.lastName || profileData?.name || '';
+  const displayLocation = profileData?.profile.location || '--';
+  const career = profileData?.profile.careerLevel || '--';
+  const percentage = profileData?.completion.percentage || '--';
 
   return (
     <CustomSafeArea>
@@ -29,21 +116,22 @@ export default function ProfileScreen() {
         {/* User Info Header */}
         <View style={styles.headerRow}>
           <View style={styles.userInfoContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop' }}
-              style={styles.avatar}
-            />
+            <View style={styles.avatar}>
+              <Text style={{ fontFamily: 'semiBold', fontSize: 24 }}>
+                {getInitials(`${firstName} ${lastName}`)}
+              </Text>
+            </View>
             <View>
-              <Text style={styles.nameText}>Favour Ekeohuru</Text>
-              <Text style={styles.subtext}>Graduate  •  Lagos, Nigeria</Text>
+              <Text style={styles.nameText}>{firstName} {lastName}</Text>
+              <Text style={styles.subtext}>{career}  •  {displayLocation}</Text>
             </View>
           </View>
           <TouchableOpacity 
             style={styles.bellButton}
-            onPress={() => router.push('/notifications')}
+            onPress={() => router.push('/(subScreens)/notification')}
             activeOpacity={0.7}
           >
-            <Ionicons name="notifications" size={22} color="#16A34A" />
+            <Feather name="bell" size={22} color="#16A34A" />
           </TouchableOpacity>
         </View>
 
@@ -51,15 +139,22 @@ export default function ProfileScreen() {
         <View style={styles.badgeCard}>
           <View style={styles.badgeTopRow}>
             <View style={styles.badgeTitleRow}>
-              <Ionicons name="diamond-outline" size={18} color="#16A34A" />
-              <Text style={styles.badgeTitle}>Career Explorer</Text>
+              <Feather name="user" size={18} color="#16A34A" />
+              <Text style={styles.badgeTitle}>Profile Completion</Text>
             </View>
-            <Text style={styles.levelText}>Level 2</Text>
+            <Text style={styles.levelText}>{percentage}%</Text>
           </View>
           <View style={styles.progressBarBackground}>
-            <View style={styles.progressBarFill} />
+            <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
           </View>
         </View>
+
+        {/* Loading Indicator for Data (if needed) */}
+        {loading && (
+          <View style={styles.inlineLoader}>
+            <ActivityIndicator size="small" color="#16A34A" />
+          </View>
+        )}
 
         {/* Menu Items List */}
         <View style={styles.menuContainer}>
@@ -82,53 +177,62 @@ export default function ProfileScreen() {
         </View>
 
       </ScrollView>
+
+      {/* Reusable Custom Modal */}
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onClose={() => setModalVisible(false)}
+      />
     </CustomSafeArea>
   );
 }
 
 const styles = StyleSheet.create({
-  // container: {
-  //   paddingHorizontal: 20,
-  //   paddingVertical: 16,
-  // },
+  container: {
+    paddingBottom: 40,
+  },
   headerRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'between',
     marginBottom: 20,
   },
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: 12,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 14,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nameText: {
-    fontFamily: 'bold',
     fontSize: 18,
+    fontFamily: 'semiBold',
     color: '#111827',
-    marginBottom: 2,
   },
   subtext: {
-    fontFamily: 'regular',
     fontSize: 13,
-    color: '#D97706', // Muted orange-gold accent as shown in design
+    fontFamily: 'regular',
+    color: '#6B7280',
+    marginTop: 2,
   },
   bellButton: {
     padding: 8,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
   },
   badgeCard: {
     backgroundColor: '#F0FDF4',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#DCFCE7',
   },
@@ -144,50 +248,54 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   badgeTitle: {
-    fontFamily: 'semiBold',
     fontSize: 14,
-    color: '#16A34A',
+    fontFamily: 'semiBold',
+    color: '#166534',
   },
   levelText: {
+    fontSize: 12,
     fontFamily: 'semiBold',
-    fontSize: 13,
-    color: '#4B5563',
+    color: '#16A34A',
   },
   progressBarBackground: {
     height: 6,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#DCFCE7',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
-    width: '65%',
+    width: '0%',
     height: '100%',
     backgroundColor: '#16A34A',
-    borderRadius: 3,
   },
   menuContainer: {
-    gap: 4,
+    gap: 10,
   },
   menuItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
   },
   menuIcon: {
-    width: 24,
+    marginRight: 4,
   },
   menuTitle: {
-    fontFamily: 'regular',
     fontSize: 15,
-    color: '#1F2937',
+    fontFamily: 'medium',
+    color: '#111827',
+  },
+  inlineLoader: {
+    marginBottom: 12,
+    alignItems: 'center',
   },
 });

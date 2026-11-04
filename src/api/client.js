@@ -30,7 +30,7 @@ export async function apiClient(endpoint, options = {}, isRetry = false) {
 
     // Handle token expiration & automatic refresh
     if (response.status === 401 && !isRetry && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
-      console.log(`[Auth] Access token expired (401) on ${endpoint}. Attempting token refresh...`);
+      // console.log(`[Auth] Access token expired (401) on ${endpoint}. Attempting token refresh...`);
       
       try {
         // Request a new access token using the httpOnly cookie
@@ -41,7 +41,7 @@ export async function apiClient(endpoint, options = {}, isRetry = false) {
         });
 
         if (!refreshResponse.ok) {
-          console.log('[Auth] Refresh token failed or expired. Forcing logout.');
+          // console.log('[Auth] Refresh token failed or expired. Forcing logout.');
           useAuthStore.getState().clearSession?.();
           throw new Error('Session expired. Please log in again.');
         }
@@ -52,11 +52,11 @@ export async function apiClient(endpoint, options = {}, isRetry = false) {
         const newAccessToken = refreshData.accessToken || refreshData.data?.accessToken;
         if (newAccessToken) {
           useAuthStore.getState().setAccessToken?.(newAccessToken);
-          console.log('[Auth] Token successfully refreshed and reset in store!');
+          // console.log('[Auth] Token successfully refreshed and reset in store!');
         }
 
         // Retry the original request with the new access token
-        console.log(`[Auth] Retrying original request to: ${endpoint}`);
+        // console.log(`[Auth] Retrying original request to: ${endpoint}`);
         return apiClient(endpoint, options, true);
 
       } catch (refreshError) {

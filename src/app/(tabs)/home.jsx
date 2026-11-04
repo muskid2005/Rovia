@@ -5,13 +5,12 @@ import {
   MaterialIcons,
   Octicons,
 } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
@@ -21,33 +20,62 @@ import CustomSafeArea from '../../components/safeArea';
 export default function HomeScreen() {
 
   const [progress, setProgress] = useState(0)
+  const [name, setName] = useState("")
   const [homeData, setHomeData] = useState(null)
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef(null);
   const sectionRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  const params = useLocalSearchParams();
+  // const params = useLocalSearchParams();
   // console.log(params)
 
-  async function fetchData() {
-   setLoading(true);
-   try {
-     const profile = await getRequest("/profile");
-     const homeDataResponse = await getRequest("/home");
-     setProgress(profile.data.completion.percentage);
-     setHomeData(homeDataResponse);
-   } catch (error) {
-     console.error(error);
-   } finally {
-     setLoading(false);
-   }
-  }
+  // async function fetchData() {
+  //  setLoading(true);
+  //  try {
+  //    const profile = await getRequest("/profile");
+  //    const homeDataResponse = await getRequest("/home");
+  //    setProgress(profile.data.completion.percentage);
+  //    setHomeData(homeDataResponse);
+  //  } catch (error) {
+  //    console.error(error);
+  //  } finally {
+  //    setLoading(false);
+  //  }
+  // }
 
   // console.log(homeData?.data?.recommendedOpportunities)
+  
 
-  useEffect(() => {
+useEffect(() => {
+    let isMounted = true; // Track mount status
+
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const profile = await getRequest("/profile");
+        const homeDataResponse = await getRequest("/home");
+        
+        // Only update state if the component is still mounted on the screen
+        if (isMounted) {
+          setProgress(profile?.data?.completion?.percentage || 0);
+          setName(profile?.data?.profile?.user?.firstName || "");
+          setHomeData(homeDataResponse);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
     fetchData();
+
+    return () => {
+      isMounted = false; // Cleanup flag when component unmounts
+    };
   }, []);
 
   return (
@@ -58,10 +86,10 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greetingText}>Good morning,</Text>
-            <Text style={styles.nameText}>{params.name}</Text>
+            <Text style={styles.nameText}>{name}</Text>
           </View>
-          <TouchableOpacity style={styles.giftIconContainer}>
-            <Feather name="gift" size={24} color="#16A34A" />
+          <TouchableOpacity style={styles.giftIconContainer} onPress={()=> router.push("/(subScreens)/notification")}>
+            <Feather name="bell" size={24} color="#16A34A" />
           </TouchableOpacity>
         </View>
 
@@ -69,7 +97,7 @@ export default function HomeScreen() {
           Your next opportunity could be closer than you think.
         </Text>
 
-        {/* Search Bar */}
+        {/* Search Bar
         <View style={styles.searchContainer}>
           <Feather name="search" size={18} color="#9CA3AF" style={styles.searchIcon} />
           <TextInput
@@ -77,7 +105,7 @@ export default function HomeScreen() {
             placeholder="Search opportunities, skills, or keywords..."
             placeholderTextColor="#9CA3AF"
           />
-        </View>
+        </View> */}
 
         {/* Progress Card */}
         <View style={styles.progressCard}>
@@ -124,7 +152,7 @@ export default function HomeScreen() {
               <Text style={[styles.gridText, { color: '#16A34A' }]}>Check Readiness</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.gridItem}>
+            <TouchableOpacity style={styles.gridItem} onPress={()=> router.push("/application")}>
               <View style={[styles.gridIconCircle, { backgroundColor: '#EEF2FF' }]}>
                 <Octicons name="paste" size={20} color="#4F46E5" />
               </View>
@@ -141,7 +169,7 @@ export default function HomeScreen() {
               <Text style={[styles.gridText, { color: '#4F46E5' }]}>Track</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.gridItem}>
+            <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/learn')}>
               <View style={[styles.gridIconCircle, { backgroundColor: '#FEF3C7' }]}>
                 <FontAwesome5 name="layer-group" size={18} color="#D97706" />
               </View>
@@ -196,7 +224,7 @@ export default function HomeScreen() {
               key={item.id} 
               style={styles.jobCard} 
               activeOpacity={0.8}
-              onPress={() => router.push(`/opportunity/${item.id}`)}
+              onPress={() => router.push(`/(subScreens)/opportunityApplication/opportunityDetail?id=${item.id}`)}
             >
               <View style={styles.cardTopRow}>
                 <View style={styles.jobDetails}>
@@ -410,7 +438,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderRadius: 16,
-    padding: 16,
+    
   },
   companyLogo: {
     width: 40,
