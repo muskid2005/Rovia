@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   skeletonCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',

@@ -27,56 +27,50 @@ export default function HomeScreen() {
   const sectionRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
-  // const params = useLocalSearchParams();
-  // console.log(params)
+  function greetings() {
+  const hours = new Date().getHours();
 
-  // async function fetchData() {
-  //  setLoading(true);
-  //  try {
-  //    const profile = await getRequest("/profile");
-  //    const homeDataResponse = await getRequest("/home");
-  //    setProgress(profile.data.completion.percentage);
-  //    setHomeData(homeDataResponse);
-  //  } catch (error) {
-  //    console.error(error);
-  //  } finally {
-  //    setLoading(false);
-  //  }
-  // }
+  if (hours >= 5 && hours < 12) {
+    return "Good morning";
+  } else if (hours >= 12 && hours < 17) {
+    return "Good afternoon";
+  } else {
+    return "Good evening";
+  }
+}  
 
-  // console.log(homeData?.data?.recommendedOpportunities)
-  
+    // console.log(greetings())
 
-useEffect(() => {
-    let isMounted = true; // Track mount status
+   useEffect(() => {
+      let isMounted = true; // Track mount status
 
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const profile = await getRequest("/profile");
-        const homeDataResponse = await getRequest("/home");
-        
-        // Only update state if the component is still mounted on the screen
-        if (isMounted) {
-          setProgress(profile?.data?.completion?.percentage || 0);
-          setName(profile?.data?.profile?.user?.firstName || "");
-          setHomeData(homeDataResponse);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
+      async function fetchData() {
+        setLoading(true);
+        try {
+          const profile = await getRequest("/profile");
+          const homeDataResponse = await getRequest("/home");
+          
+          // Only update state if the component is still mounted on the screen
+          if (isMounted) {
+            setProgress(profile?.data?.completion?.percentage || 0);
+            setName(profile?.data?.profile?.user?.firstName || "");
+            setHomeData(homeDataResponse);
+          }
+        } catch (error) {
+          console.error(error);
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
         }
       }
-    }
 
-    fetchData();
+      fetchData();
 
-    return () => {
-      isMounted = false; // Cleanup flag when component unmounts
-    };
-  }, []);
+      return () => {
+        isMounted = false; // Cleanup flag when component unmounts
+      };
+    }, []);
 
   return (
     <CustomSafeArea>
@@ -85,7 +79,7 @@ useEffect(() => {
         {/* Header Section */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greetingText}>Good morning,</Text>
+            <Text style={styles.greetingText}>{greetings()}</Text>
             <Text style={styles.nameText}>{name}</Text>
           </View>
           <TouchableOpacity style={styles.giftIconContainer} onPress={()=> router.push("/(subScreens)/notification")}>

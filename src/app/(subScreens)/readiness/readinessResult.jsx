@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 22,
     backgroundColor: '#FFFFFF',
-    
+    padding: 16,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   itemCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',

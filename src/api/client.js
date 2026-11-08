@@ -1,6 +1,6 @@
 import { useAuthStore } from '../store/useAuthStore'; // Adjust path to your store if needed
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const BASE_URL = "https://rovia-pxep.onrender.com"
 
 export async function apiClient(endpoint, options = {}, isRetry = false) {
   const url = `${BASE_URL}/api/v1${endpoint}`;
@@ -21,7 +21,7 @@ export async function apiClient(endpoint, options = {}, isRetry = false) {
 
   const config = {
     ...options,
-    credentials: 'include', // Required for httpOnly refresh token cookies
+    credentials: 'include',
     headers: defaultHeaders,
   };
 
