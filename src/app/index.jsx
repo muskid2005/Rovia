@@ -145,14 +145,6 @@ if (loading) {
           <Text style={styles.buttonText}> {currentPage === 0 ? "Next" : "Get Started"}</Text>
         </TouchableOpacity>
 
-        {/* {currentPage === 1 && (
-          <View style={styles.footerTextRow}>
-            <Text style={styles.grayText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => router.replace('/signUp')}>
-              <Text style={styles.signUpText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        )} */}
       </View>
     </SafeAreaView>
   );

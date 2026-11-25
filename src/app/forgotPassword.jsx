@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,58 +10,149 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { postRequest } from '../api/postRequests';
+import CustomModal from '../components/customModal';
+
+const GREEN = '#16A34A';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onPrimaryAction: null,
+  });
+
+  const closeModal = () => {
+    setModal((prev) => ({ ...prev, visible: false }));
+  };
+
+  async function sendEmail() {
+    const trimmedEmail = String(email || '').trim().toLowerCase();
+
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setModal({
+        visible: true,
+        title: 'Invalid email',
+        message: 'Please enter a valid email address.',
+        type: 'error',
+        onPrimaryAction: closeModal,
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const req = await postRequest('/auth/forgot-password', {
+        email: trimmedEmail,
+      });
+
+      if (req?.success) {
+        router.push({
+          pathname: '/resetLink',
+          params: {
+            email: trimmedEmail,
+            message:
+              req?.message ||
+              'If an account exists with this email, check your inbox and follow the steps in the email to reset your password.',
+          },
+        });
+      } else {
+        setModal({
+          visible: true,
+          title: 'Could not send link',
+          message: req?.message || 'Something went wrong. Please try again.',
+          type: 'error',
+          onPrimaryAction: closeModal,
+        });
+      }
+    } catch (e) {
+      setModal({
+        visible: true,
+        title: 'Request failed',
+        message:
+          e?.data?.message ||
+          e.message ||
+          'Unable to send reset link. Please check your connection.',
+        type: 'error',
+        onPrimaryAction: closeModal,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Back Button
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000000" />
-        </TouchableOpacity> */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View>
+          <Text style={styles.title}>Forgot Password?</Text>
+          <Text style={styles.subtitle}>
+            Enter your email address and we'll send you a link to reset your password.
+          </Text>
 
-        {/* Header Titles */}
-        <Text style={styles.title}>Forgot Password?</Text>
-        <Text style={styles.subtitle}>
-          Enter your email address and we'll send you a link to reset your password.
-        </Text>
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="mail-outline"
+                size={20}
+                color="#6B7280"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={setEmail}
+                editable={!loading}
+              />
+            </View>
 
-        {/* Form Container */}
-        <View style={styles.formContainer}>
-          
-          {/* Email Address */}
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#6B7280" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.disabledButton]}
+              onPress={sendEmail}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.submitButtonText}>Send Reset Link</Text>
+              )}
+            </TouchableOpacity>
           </View>
-
-          {/* Send Reset Link Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('/resetLink')}>
-            <Text style={styles.submitButtonText}>Send Reset Link</Text>
-          </TouchableOpacity>
-
         </View>
 
-        {/* Back to Log In Button */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity style={styles.backToLoginButton} onPress={() => router.replace('/login')}>
+          <TouchableOpacity
+            style={styles.backToLoginButton}
+            onPress={() => router.replace('/login')}
+            disabled={loading}
+          >
             <Text style={styles.backToLoginText}>Back to Log In</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
+
+      <CustomModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onClose={closeModal}
+        onPrimaryAction={modal.onPrimaryAction}
+      />
     </SafeAreaView>
   );
 }
@@ -69,21 +161,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: 100,
-    paddingHorizontal: 24,
-
   },
-  // scrollContent: {
-  //   paddingHorizontal: 24,
-  //   paddingTop: 10,
-  //   paddingBottom: 30,
-  //   flexGrow: 1,
-  //   justifyContent: 'space-between',
-  // },
-  // backButton: {
-  //   marginBottom: 20,
-  //   width: 30,
-  // },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 24,
+  },
   title: {
     fontSize: 24,
     fontFamily: 'bold',
@@ -93,12 +178,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#6B7280',
-    fontFamily: "regular",
+    fontFamily: 'regular',
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 80,
+    marginBottom: 60,
     paddingHorizontal: 10,
-    // lineHeight: 20,
+    lineHeight: 20,
   },
   formContainer: {
     width: '100%',
@@ -120,15 +205,18 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    fontFamily: "regular",
+    fontFamily: 'regular',
     color: '#1A1A1A',
   },
   submitButton: {
-    backgroundColor: '#16A34A',
+    backgroundColor: GREEN,
     height: 50,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   submitButtonText: {
     color: '#FFFFFF',
@@ -137,12 +225,11 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     alignItems: 'center',
-    marginTop: 440,
-    marginBottom: 20,
+    marginTop: 40,
   },
   backToLoginButton: {
     borderWidth: 1,
-    borderColor: '#16A34A',
+    borderColor: GREEN,
     borderRadius: 12,
     height: 50,
     width: '60%',
@@ -151,8 +238,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   backToLoginText: {
-    color: '#16A34A',
+    color: GREEN,
     fontSize: 14,
-    fontFamily: "semiBold",
+    fontFamily: 'semiBold',
   },
 });

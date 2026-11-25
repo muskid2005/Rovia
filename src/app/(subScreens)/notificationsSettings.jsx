@@ -2,13 +2,13 @@ import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { getRequest } from '../../api/getRequests';
 import { putRequest } from '../../api/putRequests';
@@ -122,8 +122,22 @@ export default function NotificationSettingsScreen() {
 
         {/* Loading State */}
         {loading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#16A34A" />
+          <View style={styles.card}>
+            {[1, 2, 3, 4].map((_, index) => (
+              <View 
+                key={index} 
+                style={[
+                  styles.rowItem,
+                  index === 3 && { borderBottomWidth: 0 }
+                ]}
+              >
+                <View style={styles.labelContainer}>
+                  <View style={styles.skeletonLineShort} />
+                  <View style={styles.skeletonLineLong} />
+                </View>
+                <View style={styles.skeletonSwitch} />
+              </View>
+            ))}
           </View>
         ) : preferences.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -246,5 +260,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'regular',
     color: '#9CA3AF',
+  },
+  skeletonLineShort: {
+    width: '60%',
+    height: 15,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    marginBottom: 6,
+  },
+  skeletonLineLong: {
+    width: '40%',
+    height: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+  },
+  skeletonSwitch: {
+    width: 44,
+    height: 24,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
   },
 });

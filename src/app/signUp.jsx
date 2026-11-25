@@ -28,62 +28,84 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  async function createAccount(){
-    setLoading(true)
+  async function createAccount() {
+  setLoading(true);
+  setError('');
+  setNotReady(false);
 
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
+  const trimmedEmail = String(email || '').trim().toLowerCase();
+  const trimmedFirstName = String(firstName || '').trim();
+  const trimmedLastName = String(lastName || '').trim();
+
+  if (
+    !trimmedFirstName ||
+    !trimmedLastName ||
+    !trimmedEmail ||
+    !password ||
+    !confirmPassword
+  ) {
+    setError('kindly fill all fields');
+    setNotReady(true);
+    setLoading(false);
+    return;
+  }
+
+  if (!trimmedEmail.endsWith('@gmail.com')) {
+    setNotReady(true);
+    setError('Kindly use an email address ending with @gmail.com');
+    setLoading(false);
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError('Password Mismatched');
+    setNotReady(true);
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const params = {
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      email: trimmedEmail,
+      password,
+    };
+
+    const response = await postRequest('/auth/register', params);
+    if (!response?.success) {
+      setError(response?.message || 'Could not create account.');
       setNotReady(true);
-      setError("Kindly use an email address ending with @gmail.com");
       setLoading(false);
       return;
     }
 
-    if(!firstName  || !lastName || !email || !password || !confirmPassword){
-      setError("kindly fill all fields")
-      setNotReady(true)
-      setLoading(false)
-      return
-    }
+    setSuccess(true);
+    setLoading(false);
 
-    if(password !== confirmPassword){
-      setError("Password Mismatched")
-      setNotReady(true)
-      setLoading(false)
-      return
+    router.push({
+      pathname: '/linkSent',
+      params: {
+        email: trimmedEmail,
+        message:
+          response?.message ||
+          'We sent a verification link to your email. Open it on the web to verify your account, then return here to log in.',
+      },
+    });
+  } catch (error) {
+    setNotReady(true);
+    const check = error?.data?.message || error?.message || '';
+    if (check === 'An account with this email already exists') {
+      setError('An account with this email already exists');
+    } else {
+      setError(
+        check ||
+          'your password must include a uppercase, lowercase, number and a symbol'
+      );
     }
-
-    try{
-      setError("")
-      setNotReady(false)
-      const params = {
-        "firstName": firstName,
-        "lastName": lastName,
-        "email": email,
-        "password": password
-      }
-      
-      const response = await postRequest("/auth/register", params)
-      if(!response.success){
-        setError(response.message)
-        setNotReady(true)
-        setLoading(false)
-        return
-      }
-      setLoading(false)
-      setSuccess(true)
-      
-      // 
-    }catch (error){
-      setNotReady(true)
-      const check = error.message
-      if (check === "An account with this email already exists"){
-        setError("An account with this email already exists")
-      } else {
-        setError("your password must include a uppercase, lowercase, number and a symbol")
-      }
-      setLoading(false)
-    }
+    setLoading(false);
   }
+}
   
 
   return (

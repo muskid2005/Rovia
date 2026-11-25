@@ -2,12 +2,11 @@ import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { getRequest } from '../../../api/getRequests';
 import CustomModal from '../../../components/customModal';
@@ -62,16 +61,6 @@ export default function profileUpdateFileScreen() {
     }, [])
   );
 
-  if (loading) {
-    return (
-      <CustomSafeArea>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#16A34A" />
-        </View>
-      </CustomSafeArea>
-    );
-  }
-
   const profile = profileData?.profile || {};
   const user = profile.user || {};
   const completion = profileData?.completion || {};
@@ -84,7 +73,52 @@ export default function profileUpdateFileScreen() {
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User';
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'U';
 
-  console.log(careerGoals)
+  if (loading) {
+      return (
+        <CustomSafeArea>
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.headerRow}>
+              <View style={{ width: 24, height: 24, backgroundColor: '#E5E7EB', borderRadius: 4 }} />
+              <View style={{ width: 140, height: 18, backgroundColor: '#E5E7EB', borderRadius: 4 }} />
+              <View style={{ width: 24 }} />
+            </View>
+
+            {/* Skeleton User Card */}
+            <View style={styles.userCard}>
+              <View style={[styles.avatar, { backgroundColor: '#E5E7EB' }]} />
+              <View style={[styles.userInfo, { gap: 6 }]}>
+                <View style={styles.skeletonLineShort} />
+                <View style={styles.skeletonLineLong} />
+                <View style={[styles.skeletonLineShort, { width: '50%' }]} />
+            </View>
+          </View>
+
+          {/* Skeleton Completion Card */}
+          <View style={styles.completionCard}>
+              <View style={styles.completionTopRow}>
+                <View style={[styles.skeletonLineShort, { width: '40%', height: 14 }]} />
+                <View style={[styles.skeletonLineShort, { width: '15%', height: 14 }]} />
+            </View>
+            <View style={[styles.progressBarBackground, { backgroundColor: '#E5E7EB' }]} />
+          </View>
+
+          {/* Skeleton Section Card */}
+          <View style={styles.sectionCard}>
+              <View style={[styles.skeletonLineShort, { width: '30%', marginBottom: 12 }]} />
+              <View style={[styles.skeletonLineLong, { width: '90%', marginBottom: 6 }]} />
+              <View style={[styles.skeletonLineLong, { width: '70%' }]} />
+          </View>
+
+          <View style={styles.sectionCard}>
+              <View style={[styles.skeletonLineShort, { width: '35%', marginBottom: 12 }]} />
+              <View style={[styles.skeletonLineLong, { width: '80%' }]} />
+          </View>
+          </ScrollView>
+        </CustomSafeArea>
+      );
+    }
+
+
   return (
     <CustomSafeArea>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -99,7 +133,7 @@ export default function profileUpdateFileScreen() {
         </View>
 
         {/* User Card */}
-        <View style={styles.userCard}>
+      <View style={styles.userCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
@@ -249,6 +283,18 @@ export default function profileUpdateFileScreen() {
 }
 
 const styles = StyleSheet.create({
+  skeletonLineShort: {
+    width: '60%',
+    height: 15,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+  },
+  skeletonLineLong: {
+    width: '40%',
+    height: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+  },
     badgeRow: {
     flexDirection: 'row',
     gap: 8,

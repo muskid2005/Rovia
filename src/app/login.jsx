@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +13,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { postRequest } from "../api/postRequests";
 import { useAuthStore } from '../store/useAuthStore';
-import { useStore } from '../store/useStore';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -143,11 +141,11 @@ export default function LoginScreen() {
             <View style={styles.line} />
           </View>
 
-          {/* Google Login Button */}
+          {/* Google Login Button
           <TouchableOpacity disabled={loading} style={styles.googleButton} onPress={() => useStore.setState({ hasCompletedOnboarding: false })}>
             <Image source={require("../../assets/images/localImages/google.png")} style={styles.googleIcon} />
             <Text style={styles.googleButtonText}>Log in with Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Footer Link */}
           <View style={styles.footerRow}>

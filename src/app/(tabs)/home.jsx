@@ -156,7 +156,7 @@ export default function HomeScreen() {
 
           {/* Row 2 */}
           <View style={styles.gridRow}>
-            <TouchableOpacity style={styles.gridItem}>
+            <TouchableOpacity style={styles.gridItem} onPress={()=> router.push("./application")}>
               <View style={[styles.gridIconCircle, { backgroundColor: '#EEF2FF' }]}>
                 <MaterialIcons name="assignment-turned-in" size={20} color="#4F46E5" />
               </View>

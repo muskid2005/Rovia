@@ -4,6 +4,10 @@ export default function SubScreensLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="opportunityApplication" />
+      <Stack.Screen name="applicationForm" />
+      <Stack.Screen name="applicationDetails" />
+      <Stack.Screen name="applicationStage" />
+      <Stack.Screen name="applicationOutcome" />
        <Stack.Screen name="readiness" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="notification" />

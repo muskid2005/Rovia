@@ -5,7 +5,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,7 +14,20 @@ import {
 import { deleteRequest } from '../../../api/deleteRequests';
 import { getRequest } from '../../../api/getRequests';
 import { postRequest } from '../../../api/postRequests';
+import CustomModal from "../../../components/customModal";
 import CustomSafeArea from '../../../components/safeArea';
+
+        // <CustomModal 
+        // visible={warn}
+        // title={"LOGOUT"}
+        // message={"Are you sure you want to logout?"}
+        // onClose={() => setWarn(false)}
+        // primaryButtonText = {loading? <ActivityIndicator size="small" color="#ffffff" /> :'Yes'}
+        // onPrimaryAction ={() => onLogout()}
+        // secondaryButtonText = 'No'
+        // onSecondaryAction ={() => setWarn(false)}
+        // />
+
 
 export default function OpportunityDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -25,6 +37,9 @@ export default function OpportunityDetailsScreen() {
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false); // <--- Added saving state
   const [applying, setApplying] = useState(false);
+  const [alert, setAlert] = useState(false);
+  const [alertHead, setAlertHead] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(false);
 
   async function saveOpportunity(id) {
     try {
@@ -45,6 +60,10 @@ export default function OpportunityDetailsScreen() {
       const response = await deleteRequest(`/opportunities/${id}/save`);
       return response;
     } catch (error) {
+      const err = error?.response?.data || error?.message || error
+      setAlert(true)
+      setAlertHead("Failed to unsave opportunity")
+      setAlertMessage(err)
       console.error('Failed to unsave opportunity:', error?.response?.data || error?.message || error);
       throw error;
     }
@@ -64,8 +83,11 @@ export default function OpportunityDetailsScreen() {
         await unsaveOpportunity(id);
       }
     } catch (error) {
+      const err = error.message || "Could not update saved status. Please try again."
       setIsSaved(previousState); // Revert state on error
-      Alert.alert("Error", "Could not update saved status. Please try again.");
+      setAlert(true)
+      setAlertMessage(err)
+      setAlertHead("Error")
     } finally {
       setSaving(false);
     }
@@ -86,6 +108,10 @@ export default function OpportunityDetailsScreen() {
           setIsSaved(data?.isSaved || false);
         }
       } catch (error) {
+        const err = error?.response?.data || error?.message || error
+        setAlert(true)
+        setAlertHead("Failed to fetch opportunity details")
+        setAlertMessage(err)
         console.error("Failed to fetch opportunity details:", error);
       } finally {
         if (isMounted) {
@@ -115,11 +141,14 @@ export default function OpportunityDetailsScreen() {
         ...defaultApplicationData,
       };
 
-      console.log("SENDING PAYLOAD:", payload);
       const response = await postRequest("/applications", payload);
       return response;
     } catch (error) {
-      console.error("Failed to submit application:", error?.response?.data || error?.message || error);
+      const err = error?.response?.data || error?.message || error
+      setAlertHead("Failed to submit application")
+      setAlertMessage(err)
+      setAlert(true)
+      console.error(error.message);
       throw error;
     }
   }
@@ -127,19 +156,23 @@ export default function OpportunityDetailsScreen() {
   // Handle Button Press Action
   const handleApply = async () => {
     if (!id) {
-      Alert.alert("Error", "Opportunity ID is missing.");
+      setAlert(true)
+      setAlertHead("Error")
+      setAlertMessage("Opportunity ID is missing.")
       return;
     }
 
     setApplying(true);
     try {
       await applyForOpportunity(id);
-      Alert.alert("Success", "Your application was submitted successfully!");
+      setAlert(true)
+      setAlertHead("Success")
+      setAlertMessage("Your application was submitted successfully!")
     } catch (error) {
-      Alert.alert(
-        "Application Failed", 
-        error?.response?.data?.message || "Could not submit application. Please try again."
-      );
+      const err = error?.response?.data?.message || error.message || "Could not submit application. Please try againm."
+      setAlert(true)
+      setAlertHead("Application Failed")
+      setAlertMessage(err)
     } finally {
       setApplying(false);
     }
@@ -213,6 +246,15 @@ export default function OpportunityDetailsScreen() {
     <CustomSafeArea>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
+         <CustomModal 
+         visible={alert}
+         title={alertHead}
+         message={alertMessage}
+         onClose={() => setAlert(false)}
+         primaryButtonText = {loading? <ActivityIndicator size="small" color="#ffffff" /> :'close'}
+         onPrimaryAction ={() => setAlert(false)}
+         />
+
         {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Feather name="chevron-left" size={24} color="#16A34A" />

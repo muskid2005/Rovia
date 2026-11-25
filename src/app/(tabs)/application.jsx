@@ -1,14 +1,14 @@
 
 
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { getRequest } from '../../api/getRequests';
 import CustomSafeArea from '../../components/safeArea';
@@ -17,6 +17,8 @@ export default function ApplicationsScreen() {
   const [activeTab, setActiveTab] = useState('Active');
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  
 
   // Use focus effect so it refetches every time you open the screen
   useFocusEffect(
@@ -28,6 +30,7 @@ export default function ApplicationsScreen() {
         try {
           const response = await getRequest('/applications');
           const data = response?.data || [];
+          
           if (isMounted) {
             setApplications(data);
           }
@@ -53,12 +56,17 @@ export default function ApplicationsScreen() {
   const closedApplications = applications.filter((app) => app.status !== 'ACTIVE');
   const displayedApplications = activeTab === 'Active' ? activeApplications : closedApplications;
 
+  
+
   return (
     <CustomSafeArea>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Header Title */}
-        <Text style={styles.headerTitle}>Applications</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Applications</Text>
+          <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(subScreens)/applicationForm')}><Feather name="plus" size={18} color="#fff"/><Text style={styles.addText}> Add</Text></TouchableOpacity>
+        </View>
 
         {/* Tabs: Active / Closed */}
         <View style={styles.tabToggleContainer}>
@@ -103,15 +111,16 @@ export default function ApplicationsScreen() {
             const companyName = item.opportunity?.organisation || 'Verified Employer';
             const stageText = item.currentStage ? item.currentStage.replace('_', ' ') : 'Submitted';
             const dateStr = item.applicationDate ? new Date(item.applicationDate).toLocaleDateString() : '';
-
+            const source = item.source
+            // console.log(item)
             return (
               <TouchableOpacity 
                 key={item.id} 
                 style={styles.card} 
                 activeOpacity={0.8}
                 onPress={() => {
-                  if (item.opportunityId) {
-                    router.push(`/(subScreens)/opportunityApplication/opportunityDetail?id=${item.opportunityId}`);
+                  if (item.id) {
+                    router.push(`/(subScreens)/applicationDetails?id=${item.id}`);
                   }
                 }}
               >
@@ -129,12 +138,16 @@ export default function ApplicationsScreen() {
                   </View>
                   <Text style={styles.companyName} numberOfLines={1}>{companyName}</Text>
                   
-                  <View style={[styles.statusBadge, styles.reviewBadge]}>
-                    <Ionicons name="time-outline" size={12} color="#1D4ED8" style={styles.statusIcon} />
-                    <Text style={[styles.statusText, { color: '#1D4ED8' }]}>
-                      {stageText} {dateStr ? `· ${dateStr}` : ''}
+                  <View style={styles.meta}>
+                    <Text style={[styles.statusText, { color: '#16A34A' }]}>
+                      {item.outcomeType? item.outcomeType : stageText}
                     </Text>
+                    <Text style={{color: "#9CA3AF"}}>{" • "}</Text>
+                    <Text style={[styles.statusText, { color: '#9CA3AF' }]}>
+                      {dateStr ? `${dateStr}` : ''}
+                    </Text>                    
                   </View>
+                  <Text style={styles.source}>{source.toLowerCase() === "found_in_rovia" ? "Found in Rovia" : "Imported"}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -150,11 +163,34 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
+  date:{fontSize:11,color:'#6B7280'},
+  meta:{flexDirection:'row',alignItems:'center'},
+
+  header:{
+    flexDirection:'row',
+    alignItems:'center',
+    justifyContent:'space-between',
+    marginBottom:20,
+    // backgroundColor: "yellow"
+  },
+  addText:{
+    color:'#fff',
+    fontFamily:'semiBold',
+    fontSize:13
+  },
+  addBtn:{
+    backgroundColor:"#16A34A",
+    paddingHorizontal:13,
+    paddingVertical:11,
+    borderRadius:10,
+    flexDirection:'row',
+    alignItems:'center'
+  },
   headerTitle: {
     fontSize: 24,
     fontFamily: 'semiBold',
     color: '#111827',
-    marginBottom: 16,
+    // marginBottom: 16,
   },
   tabToggleContainer: {
     flexDirection: 'row',
@@ -194,6 +230,11 @@ const styles = StyleSheet.create({
   cardLeft: {
     marginRight: 12,
   },
+  source:{
+    fontSize:10,
+    color:'#9CA3AF',
+    marginTop:5
+  },
   iconPlaceholder: {
     width: 50,
     height: 50,
@@ -224,20 +265,17 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     marginBottom: 8,
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  reviewBadge: {
-    backgroundColor: '#EFF6FF',
-  },
-  statusIcon: {
-    marginRight: 4,
-  },
+  // statusBadge: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   alignSelf: 'flex-start',
+  //   paddingHorizontal: 8,
+  //   paddingVertical: 4,
+  //   borderRadius: 6,
+  // },
+  // reviewBadge: {
+  //   backgroundColor: '#EFF6FF',
+  // },
   statusText: {
     fontSize: 11,
     fontFamily: 'medium',
